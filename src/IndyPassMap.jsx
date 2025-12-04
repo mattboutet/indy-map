@@ -11,7 +11,16 @@ let DefaultIcon = L.icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
   iconSize: [25, 41],
-  iconAnchor: [12, 41]
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34]
+});
+
+let SelectedIcon = L.icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34]
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;
@@ -179,6 +188,7 @@ const IndyPassMap = () => {
                 <Marker
                   key={idx}
                   position={[resort.lat, resort.lng]}
+                  icon={selectedResort?.name === resort.name ? SelectedIcon : DefaultIcon}
                   eventHandlers={{
                     click: () => setSelectedResort(resort),
                   }}
