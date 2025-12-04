@@ -29,8 +29,19 @@ const IndyPassMap = () => {
   const [selectedResort, setSelectedResort] = useState(null);
   const [filter, setFilter] = useState('all');
   const [sortBy, setSortBy] = useState('distance');
-  const [origin, setOrigin] = useState('Portland, ME');
-  const [tempOrigin, setTempOrigin] = useState('Portland, ME');
+
+  // Initialize from localStorage or default to Portland, ME
+  const [origin, setOrigin] = useState(() => {
+    return localStorage.getItem('indyPassOrigin') || 'Portland, ME';
+  });
+  const [tempOrigin, setTempOrigin] = useState(() => {
+    return localStorage.getItem('indyPassOrigin') || 'Portland, ME';
+  });
+
+  // Save to localStorage whenever origin changes
+  React.useEffect(() => {
+    localStorage.setItem('indyPassOrigin', origin);
+  }, [origin]);
 
   const resorts = [
     // MAINE - Alpine
