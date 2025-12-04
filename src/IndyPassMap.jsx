@@ -20,8 +20,8 @@ const IndyPassMap = () => {
   const [selectedResort, setSelectedResort] = useState(null);
   const [filter, setFilter] = useState('all');
   const [sortBy, setSortBy] = useState('distance');
-  const [origin, setOrigin] = useState('Biddeford, ME');
-  const [tempOrigin, setTempOrigin] = useState('Biddeford, ME');
+  const [origin, setOrigin] = useState('Portland, ME');
+  const [tempOrigin, setTempOrigin] = useState('Portland, ME');
 
   const resorts = [
     // MAINE - Alpine
