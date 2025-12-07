@@ -89,6 +89,11 @@ const IndyPassMap = () => {
   const [filter, setFilter] = useState('all');
   const [sortBy, setSortBy] = useState('distance');
 
+  // Mobile UX state
+  const [headerExpanded, setHeaderExpanded] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [mobileView, setMobileView] = useState('map'); // 'map' | 'list'
+
   // Initialize from localStorage or default to Portland, ME
   const [origin, setOrigin] = useState(() => {
     return localStorage.getItem('indyPassOrigin') || 'Portland, ME';
@@ -108,7 +113,7 @@ const IndyPassMap = () => {
   // Handle selection changes (scroll to item and open popup)
   React.useEffect(() => {
     if (selectedResort) {
-      // 1. Scroll list to item
+      // 1. Scroll list to item (if list is visible)
       const listItem = document.getElementById(`resort-item-${selectedResort.name}`);
       if (listItem) {
         listItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -259,37 +264,108 @@ const IndyPassMap = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white p-4">
+    <div className="min-h-screen bg-slate-900 text-white p-2 md:p-4">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold mb-4 text-center">
+        <h1 className="text-lg md:text-2xl font-bold mb-2 md:mb-4 text-center">
           Indy Pass - New England & Eastern Canada
-          {isCalculating && <span className="ml-2 text-sm font-normal text-yellow-400 animate-pulse">(Calculating drive times...)</span>}
+          {isCalculating && <span className="ml-2 text-sm font-normal text-yellow-400 animate-pulse">(Calculating...)</span>}
         </h1>
 
         {/* Origin Input */}
-        <div className="bg-blue-900 border-2 border-blue-500 rounded-lg p-4 mb-4">
-          <label className="block text-sm font-semibold text-blue-200 mb-2">📍 Starting Location (for Google Maps directions)</label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={tempOrigin}
-              onChange={(e) => setTempOrigin(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && setOrigin(tempOrigin)}
-              placeholder="Enter your address or city"
-              className="flex-1 bg-white text-gray-900 border-2 border-blue-400 rounded px-3 py-2 text-sm font-medium"
-            />
+        <div className="bg-blue-900 border-2 border-blue-500 rounded-lg p-2 md:p-4 mb-2 md:mb-4">
+          {/* Mobile: Collapsed view */}
+          <div className="md:hidden">
             <button
-              onClick={() => setOrigin(tempOrigin)}
-              className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded text-sm font-bold"
+              onClick={() => setHeaderExpanded(!headerExpanded)}
+              className="w-full flex justify-between items-center min-h-[44px] px-2"
             >
-              Update
+              <span className="text-sm text-blue-200">📍 From: <strong className="text-white">{origin}</strong></span>
+              <span className="text-blue-300 text-lg">{headerExpanded ? '▲' : '▼'}</span>
             </button>
+            {headerExpanded && (
+              <div className="mt-2 flex gap-2">
+                <input
+                  type="text"
+                  value={tempOrigin}
+                  onChange={(e) => setTempOrigin(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && setOrigin(tempOrigin)}
+                  placeholder="Enter your address or city"
+                  className="flex-1 bg-white text-gray-900 border-2 border-blue-400 rounded px-3 py-3 text-base font-medium min-h-[44px]"
+                />
+                <button
+                  onClick={() => { setOrigin(tempOrigin); setHeaderExpanded(false); }}
+                  className="bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded text-base font-bold min-h-[44px]"
+                >
+                  Update
+                </button>
+              </div>
+            )}
           </div>
-          <p className="text-sm text-blue-300 mt-2">Current origin: <strong>{origin}</strong></p>
+
+          {/* Desktop: Always expanded */}
+          <div className="hidden md:block">
+            <label className="block text-sm font-semibold text-blue-200 mb-2">📍 Starting Location (for Google Maps directions)</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={tempOrigin}
+                onChange={(e) => setTempOrigin(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && setOrigin(tempOrigin)}
+                placeholder="Enter your address or city"
+                className="flex-1 bg-white text-gray-900 border-2 border-blue-400 rounded px-3 py-2 text-sm font-medium"
+              />
+              <button
+                onClick={() => setOrigin(tempOrigin)}
+                className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded text-sm font-bold"
+              >
+                Update
+              </button>
+            </div>
+            <p className="text-sm text-blue-300 mt-2">Current origin: <strong>{origin}</strong></p>
+          </div>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap gap-3 mb-3 items-center text-sm">
+        {/* Filters - Mobile */}
+        <div className="md:hidden flex items-center gap-2 mb-2">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="bg-slate-700 px-4 min-h-[44px] rounded flex items-center gap-2"
+          >
+            <span>Filters</span>
+            {filter !== 'all' && <span className="bg-blue-600 px-2 py-0.5 rounded text-xs">1</span>}
+          </button>
+          {/* Compact legend dots */}
+          <div className="flex gap-1.5 items-center">
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+            <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+          </div>
+          <span className="text-slate-400 text-sm ml-auto">{filteredResorts.length} resorts</span>
+        </div>
+
+        {/* Mobile filter dropdown */}
+        {showFilters && (
+          <div className="md:hidden bg-slate-800 rounded-lg p-3 mb-2 space-y-2">
+            <select value={filter} onChange={(e) => setFilter(e.target.value)} className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 min-h-[44px] text-base">
+              <option value="all">All Resorts</option>
+              <option value="alpine">Alpine Only</option>
+              <option value="xc">XC Only</option>
+              <option value="under2">Under 2 Hours</option>
+              <option value="under3">Under 3 Hours</option>
+              <option value="night">Night Skiing</option>
+              <option value="vertical">1000+ ft Vert</option>
+            </select>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 min-h-[44px] text-base">
+              <option value="distance">By Drive Time</option>
+              <option value="vertical">By Vertical</option>
+              <option value="name">By Name</option>
+            </select>
+          </div>
+        )}
+
+        {/* Filters - Desktop */}
+        <div className="hidden md:flex flex-wrap gap-3 mb-3 items-center text-sm">
           <select value={filter} onChange={(e) => setFilter(e.target.value)} className="bg-slate-800 border border-slate-600 rounded px-2 py-1">
             <option value="all">All Resorts</option>
             <option value="alpine">Alpine Only</option>
@@ -307,8 +383,8 @@ const IndyPassMap = () => {
           <span className="text-slate-400">{filteredResorts.length} resorts</span>
         </div>
 
-        {/* Legend */}
-        <div className="flex flex-wrap gap-4 mb-4 text-xs">
+        {/* Legend - Desktop */}
+        <div className="hidden md:flex flex-wrap gap-4 mb-4 text-xs">
           <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-green-500"></div><span>&lt;1h</span></div>
           <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-yellow-500"></div><span>1-2h</span></div>
           <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-orange-500"></div><span>2-3h</span></div>
@@ -316,9 +392,35 @@ const IndyPassMap = () => {
           <div className="flex items-center gap-1 ml-2"><div className="w-3 h-3 rounded-full border-2 border-white"></div><span>XC</span></div>
         </div>
 
+        {/* Mobile Tab Bar */}
+        <div className="lg:hidden flex mb-2 bg-slate-800 rounded-lg p-1">
+          <button
+            onClick={() => setMobileView('map')}
+            className={`flex-1 py-3 rounded-md text-sm font-medium min-h-[44px] transition-colors ${
+              mobileView === 'map'
+                ? 'bg-blue-600 text-white'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Map
+          </button>
+          <button
+            onClick={() => setMobileView('list')}
+            className={`flex-1 py-3 rounded-md text-sm font-medium min-h-[44px] transition-colors ${
+              mobileView === 'list'
+                ? 'bg-blue-600 text-white'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            List ({filteredResorts.length})
+          </button>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Map */}
-          <div className="bg-slate-800 rounded-lg p-1 h-[400px] overflow-hidden relative z-0">
+          <div className={`bg-slate-800 rounded-lg p-1 h-[300px] lg:h-[400px] overflow-hidden relative z-0 ${
+            mobileView !== 'map' ? 'hidden lg:block' : ''
+          }`}>
             <MapContainer center={[44.5, -70]} zoom={6} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -351,13 +453,15 @@ const IndyPassMap = () => {
           </div>
 
           {/* Resort List */}
-          <div className="bg-slate-800 rounded-lg p-3 max-h-[400px] overflow-y-auto" ref={listRef}>
+          <div className={`bg-slate-800 rounded-lg p-3 h-[300px] lg:h-auto lg:max-h-[400px] overflow-y-auto ${
+            mobileView !== 'list' ? 'hidden lg:block' : ''
+          }`} ref={listRef}>
             <div className="space-y-1.5">
               {filteredResorts.map((resort, idx) => (
                 <div
                   key={idx}
                   id={`resort-item-${resort.name}`}
-                  className={`p-2 rounded cursor-pointer text-sm ${selectedResort?.name === resort.name ? 'bg-slate-600' : 'bg-slate-700 hover:bg-slate-600'}`}
+                  className={`p-2 py-3 md:py-2 rounded cursor-pointer text-sm min-h-[48px] md:min-h-0 ${selectedResort?.name === resort.name ? 'bg-slate-600' : 'bg-slate-700 hover:bg-slate-600'}`}
                   onClick={() => setSelectedResort(resort)}
                 >
                   <div className="flex justify-between items-center">
@@ -377,9 +481,9 @@ const IndyPassMap = () => {
           </div>
         </div>
 
-        {/* Selected Resort Detail */}
+        {/* Selected Resort Detail - Desktop */}
         {selectedResort && (
-          <div className="mt-4 bg-slate-800 rounded-lg p-4">
+          <div className="hidden lg:block mt-4 bg-slate-800 rounded-lg p-4">
             <div className="flex justify-between items-start">
               <div>
                 <h2 className="text-xl font-bold">{selectedResort.name}</h2>
@@ -388,7 +492,7 @@ const IndyPassMap = () => {
               <button onClick={() => setSelectedResort(null)} className="text-slate-400 hover:text-white text-xl">×</button>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+            <div className="grid grid-cols-4 gap-3 mt-3">
               <div className="bg-slate-700 rounded p-2">
                 <div className="text-slate-400 text-xs">Drive Time</div>
                 <div className="text-lg font-bold" style={{ color: getTimeColor(selectedResort.driveTime) }}>
@@ -424,6 +528,86 @@ const IndyPassMap = () => {
                 className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-sm font-medium">
                 Directions
               </a>
+            </div>
+          </div>
+        )}
+
+        {/* Selected Resort Detail - Mobile Bottom Sheet */}
+        {selectedResort && (
+          <div className="lg:hidden fixed inset-0 z-50">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/50"
+              onClick={() => setSelectedResort(null)}
+            />
+
+            {/* Sheet */}
+            <div className="absolute inset-x-0 bottom-0 bg-slate-800 rounded-t-2xl p-4 pb-8 max-h-[70vh] overflow-y-auto">
+              {/* Drag handle */}
+              <div className="w-12 h-1 bg-slate-600 rounded-full mx-auto mb-4" />
+
+              {/* Close button */}
+              <button
+                onClick={() => setSelectedResort(null)}
+                className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white text-2xl"
+                aria-label="Close"
+              >
+                ×
+              </button>
+
+              {/* Content */}
+              <div>
+                <h2 className="text-xl font-bold">{selectedResort.name}</h2>
+                <p className="text-slate-400 text-sm">{selectedResort.location}</p>
+              </div>
+
+              {/* Stats grid */}
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                <div className="bg-slate-700 rounded p-3">
+                  <div className="text-slate-400 text-xs">Drive Time</div>
+                  <div className="text-lg font-bold" style={{ color: getTimeColor(selectedResort.driveTime) }}>
+                    {formatDriveTime(selectedResort.driveTime)}
+                  </div>
+                </div>
+                {!selectedResort.xc && (
+                  <>
+                    <div className="bg-slate-700 rounded p-3">
+                      <div className="text-slate-400 text-xs">Vertical</div>
+                      <div className="text-lg font-bold">{selectedResort.vertical}'</div>
+                    </div>
+                    <div className="bg-slate-700 rounded p-3">
+                      <div className="text-slate-400 text-xs">Trails</div>
+                      <div className="text-lg font-bold">{selectedResort.trails}</div>
+                    </div>
+                  </>
+                )}
+                <div className="bg-slate-700 rounded p-3">
+                  <div className="text-slate-400 text-xs">Features</div>
+                  <div className="text-sm">
+                    {selectedResort.xc ? 'Cross-Country' : selectedResort.night ? 'Night Skiing' : 'Day only'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex gap-3 mt-4">
+                <a
+                  href={selectedResort.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded text-sm font-medium text-center min-h-[48px] flex items-center justify-center"
+                >
+                  Website
+                </a>
+                <a
+                  href={getGoogleMapsUrl(selectedResort)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 bg-green-600 hover:bg-green-700 px-4 py-3 rounded text-sm font-medium text-center min-h-[48px] flex items-center justify-center"
+                >
+                  Directions
+                </a>
+              </div>
             </div>
           </div>
         )}
