@@ -154,7 +154,7 @@ const IndyPassMap = () => {
 
     const calculateTimes = async () => {
       // Check cache first
-      const cachedData = localStorage.getItem('indyPassDriveTimes_v4');
+      const cachedData = localStorage.getItem('indyPassDriveTimes_v5');
       if (cachedData) {
         try {
           const { origin: cachedOrigin, resorts: cachedResorts } = JSON.parse(cachedData);
@@ -194,14 +194,14 @@ const IndyPassMap = () => {
             // durations array includes the origin itself at index 0, so resort i corresponds to durations[i+1]
             const durationSeconds = durations[index + 1];
             if (durationSeconds !== null) {
-              resort.driveTime = Math.round(durationSeconds / 60);
+              resort.driveTime = adjustDriveTime(Math.round(durationSeconds / 60));
             }
           });
 
           setResortsWithTimes(updatedResorts);
 
           // Save to cache
-          localStorage.setItem('indyPassDriveTimes_v4', JSON.stringify({
+          localStorage.setItem('indyPassDriveTimes_v5', JSON.stringify({
             origin: origin,
             resorts: updatedResorts
           }));
@@ -224,6 +224,12 @@ const IndyPassMap = () => {
   // Wait, I need to be careful about the variable names.
   // The original code has `const resorts = [...]`.
   // I should rename the static list to `staticResorts` or similar, and initialize state with it.
+
+  // Adjust OSM drive times to better match real-world driving
+  // OSM uses posted speed limits which overestimate by ~22%
+  const adjustDriveTime = (osmMinutes) => {
+    return Math.round(osmMinutes * 0.78);
+  };
 
   const getTimeColor = (minutes) => {
     if (minutes <= 60) return '#22c55e';
